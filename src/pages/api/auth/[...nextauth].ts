@@ -1,6 +1,8 @@
 import NextAuth from "next-auth";
 import GithubProvider from "next-auth/providers/github";
 
+import { fauna, q } from '../../../services/fauna';
+
 export const authOptions = {
   // Configure one or more authentication providers
   providers: [
@@ -14,5 +16,40 @@ export const authOptions = {
       }
     })
   ],
+  jwt: {
+    signingKey: process.env.JWT_SIGNING_PRIVATE_KEY as string,
+  },
+  callbacks: {
+    async signIn({ user, account, profile }: any) {
+      try {
+        await fauna.query(
+          q.If(
+            q.Not(
+              q.Exists(
+                q.Match(
+                  q.Index('user_by_email'),
+                  q.Casefold(user.email)
+                )
+              )
+            ),
+            q.Create(
+              q.Collection('users'),
+              { data: { email: user.email } }
+            ),
+            q.Get(
+              q.Match(
+                q.Index('user_by_email'),
+                q.Casefold(user.email)
+              )
+            )
+          )
+        )
+        
+        return true;
+      } catch {
+        return false; 
+      }
+    },
+  },
 }
 export default NextAuth(authOptions)
