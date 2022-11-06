@@ -16,8 +16,11 @@ export const authOptions = {
       }
     })
   ],
+  // jwt: {
+  //   signingKey: process.env.JWT_SIGNING_PRIVATE_KEY as string,
+  // },
   jwt: {
-    signingKey: process.env.JWT_SIGNING_PRIVATE_KEY as string,
+    
   },
   callbacks: {
     async signIn({ user, account, profile }: any) {
